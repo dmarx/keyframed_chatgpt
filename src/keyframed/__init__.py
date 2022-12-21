@@ -1,15 +1,11 @@
 # I'm seeing commonalities in the APIs for the Keyframed, Adaptor, and Looper classes. Please implement a `KeyframedBase` abstract base class which captures these commonalities and standard API. respond with working code only.
 
-class Keyframed:
-    def __init__(self, data=None, interp=None, n=None):
-        if data is None:
-            data = {0: 0}
-        if interp is None:
-            interp = {}
-        self.data = data
-        self.interp = interp
-        self.is_bounded = True if n is not None else False
-        self.length = n
+import abc
+
+class KeyframedBase(abc.ABC):
+    def __init__(self):
+        self.is_bounded = False
+        self.length = None
     
     def __len__(self):
         return self.length
@@ -21,6 +17,32 @@ class Keyframed:
     def set_length(self, n):
         self.length = n
         self.is_bounded = True
+    
+    @abc.abstractmethod
+    def __getitem__(self, index):
+        pass
+    
+    @abc.abstractmethod
+    def __setitem__(self, index, value):
+        pass
+    
+    @property
+    @abc.abstractmethod
+    def keyframes(self):
+        pass
+
+class Keyframed(KeyframedBase):
+    def __init__(self, data=None, interp=None, n=None):
+        super().__init__()
+        if data is None:
+            data = {0: 0}
+        if interp is None:
+            interp = {}
+        self.data = data
+        self.interp = interp
+        if n is not None:
+            self.is_bounded = True
+            self.length = n
     
     def __getitem__(self, index):
         if index < 0 or (self.is_bounded and index >= self.length):
@@ -52,13 +74,22 @@ class Keyframed:
         if len(value) > 1:
             self.interp[index] = value[1]
     
+    @property
+    def keyframes(self):
+        return self.data.keys()
+    
+    # NB: ChatGPT dropped these methods, but I'm going to keep them for now and assume they still work
+    def set_unbounded(self):
+        self.is_bounded = False
+        self.length = None
+    
+    def set_length(self, n):
+        self.length = n
+        self.is_bounded = True
+    
     def append(self, other):
         if self.is_bounded or other.is_bounded:
             raise ValueError("Cannot append a bounded Keyframed object")
         self.data.update(other.data)
         self.interp.update(other.interp)
         self.length = None
-    
-    @property
-    def keyframes(self):
-        return self.data.keys()
