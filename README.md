@@ -362,5 +362,55 @@ volume = lfo * volume_range
 
 This is just one example of how the Looper class can be used to create LFOs. The possibilities are endless! You can use LFOs to control almost any parameter in your music or art project, and you can even chain multiple LFOs together to create even more complex modulations.
 
+## Chaining LFOs
 
+Chaining LFOs together to create complex modulations is easy with the Looper class. All you need to do is create multiple LFOs using the Looper class, and then combine them using basic arithmetic operations like addition and multiplication.
 
+For example, let's say we want to create an LFO that modulates both the pitch and volume of a synth. We can do this by creating two separate LFOs, one for pitch and one for volume, and then combining them using addition.
+
+Here's how we might do this:
+
+```python
+# First, let's create an LFO for pitch. This LFO will have a frequency of 2 Hz and will oscillate between -6 and 6 semitones.
+looper = Looper(
+    Keyframed({0: -6, 0.5: 6}, interp={0.25: 'linear'}),
+    max_repetitions=float('inf'),
+    rate=2
+)
+
+# Now let's create an LFO for volume. This LFO will have a frequency of 1 Hz and will oscillate between 0 and 0.5.
+looper2 = Looper(
+    Keyframed({0: 0, 0.5: 0.5}, interp={0.25: 'linear'}),
+    max_repetitions=float('inf'),
+    rate=1
+)
+
+# Now we can combine these two LFOs using addition to create a new LFO that modulates both pitch and volume.
+lfo = looper + looper2
+
+# Let's check that our new LFO is working as expected
+
+# The value of the LFO at index 0 should be the sum of the values of the two LFOs at index 0
+assert lfo[0] == looper[0] + looper2[0]
+
+# The value of the LFO at index 1 should be the sum of the values of the two LFOs at index 1
+assert lfo[1] == looper[1] + looper2[1]
+
+# The value of the LFO at index 2 should be the sum of the values of the two LFOs at index 2
+assert lfo[2] == looper[2] + looper2[2]
+
+# And so on
+
+# We can use this LFO to modulate the pitch and volume of a synth by multiplying the LFO values by the desired pitch and volume ranges
+pitch_range = 12  # semitones
+volume_range = 0.5  # range from 0 to 0.5
+
+pitch = lfo * pitch_range
+volume = lfo * volume_range
+
+# Now we can use the pitch and volume values to control our synth
+```
+
+As you can see, chaining LFOs together to create complex modulations is easy with the Looper class. You can chain as many LFOs together as you like, and use basic arithmetic operations to combine them in any way you like.
+
+Happy modulating!
