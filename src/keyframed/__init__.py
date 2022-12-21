@@ -3,6 +3,7 @@
 import abc
 import traces
 import scipy.interpolate
+import sortedcontainers
 
 class KeyframedBase(abc.ABC):
     def __init__(self):
@@ -33,24 +34,58 @@ class KeyframedBase(abc.ABC):
     def keyframes(self):
         pass
 
-# NB: request for implementation "using" traces dropped the ABC inheritance
-# NB: Now ChatGPT dropped all inheritance for this class, but was focused on __getitem__ implementation
-#     so let's chalk that up to it being "distracted" and assume the only change is the __getitem__ method.
-class Keyframed(traces.TimeSeries):
+# Please modify the `Keyframed` class such that it still uses the `traces` library and `scipy.interpolate`, but such that a user can provide a custom defined callable as a keyframe valuable. Let's assume that the callable must take the keyframe index (k) as the first positional argument, and the Keyframed object itself (parent_kf) as the second positional argument.
+class Keyframed:
     def __init__(self, data=None, interp=None, n=None):
         if data is None:
             data = {}
-        if interp is None:
-            interp = {}
-        
-        self.is_bounded = (n is not None)
-        self.interp = interp
-        
-        # Initialize the TimeSeries with the data and interpolation methods
-        super().__init__(data, interp=interp)
-        
+        self._data = sortedcontainers.SortedDict()
+        self._interp = sortedcontainers.SortedDict()
+        self._interp_func = {}
+        self.is_bounded = False
+        self.n = n
         if n is not None:
-            self.set_length(n)
+            self.is_bounded = True
+        for k, v in data.items():
+            self[k] = v
+        for k, v in interp.items():
+            self.set_interp(k, v)
+    
+    def __getitem__(self, k):
+        if self.is_bounded:
+            if k < 0 or k >= self.n:
+                raise StopIteration
+        if k in self._data:
+            return self._data[k]
+        if k in self._interp:
+            return self._interp_func[k](k, self)
+        floor_key = self._data.floor_key(k)
+        ceil_key = self._data.ceiling_key(k)
+        if floor_key is None and ceil_key is None:
+            return 0
+        if floor_key is None:
+            return self._data[ceil_key]
+        if ceil_key is None:
+            return self._data[floor_key]
+        if floor_key == ceil_key:
+            return self._data[floor_key]
+        if ceil_key in self._interp:
+            return self._interp_func[ceil_key](k, self)
+        x = [floor_key, ceil_key]
+        y = [self._data[floor_key], self._data[ceil_key]]
+        interp_func = scipy.interpolate.interp1d(x, y)
+        return interp_func(k)
+    
+    def __setitem__(self, k, v):
+        if isinstance(v, tuple):
+            self._data[k] = v[0]
+            self.set_interp(k, v[1])
+        else:
+            self._data[k] = v
+            self._interp.pop(k, None)
+            self._interp_func.pop(k, None)
+
+    # NB output stopped at setitem and getitem. assuming rest is still kosher.
     
     def __len__(self):
         if self.is_bounded:
@@ -83,37 +118,6 @@ class Keyframed(traces.TimeSeries):
         
         return Keyframed(data, interp=interp, n=n)
     
-    # i've noticed that `scipy.interpolate.interp1d` has a lot of useful interpolation methods I'd like to support. please modify your implementation of the Keyframed class to use `scipy.interpolate.interp1d` to perform interpolations between keyframes. respond with working python code which implements the Keyframed class only, no unit tests.
-    def __getitem__(self, t):
-        if t in self.keyframes:
-            return self.data[t]
-        
-        interp_method = self.interp.get(t, "linear")
-        if interp_method == "linear":
-            x = list(self.keyframes)
-            y = [self.data[x_] for x_ in x]
-            f = scipy.interpolate.interp1d(x, y, kind="linear")
-            return f(t)
-        elif interp_method == "previous":
-            x = list(self.keyframes)
-            y = [self.data[x_] for x_ in x]
-            f = scipy.interpolate.interp1d(x, y, kind="previous")
-            return f(t)
-        elif interp_method == "next":
-            x = list(self.keyframes)
-            y = [self.data[x_] for x_ in x]
-            f = scipy.interpolate.interp1d(x, y, kind="next")
-            return f(t)
-        else:
-            raise ValueError(f"Invalid interpolation method: {interp_method}")
-
-    def __setitem__(self, index, value):
-        if self.is_bounded and index >= len(self):
-            raise IndexError("Index out of range")
-        
-        super().__setitem__(index, value)
-    
-    # NB: ChatGPT dropped this property. Leaving it for now, no idea if it still works
     @property
     def keyframes(self):
         return self.data.keys()
