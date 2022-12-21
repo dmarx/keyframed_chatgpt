@@ -156,3 +156,40 @@ print(kf5[10])  # prints 45
 Note that addition and subtraction of `Keyframed` objects is only supported between `Keyframed` objects of the same length. If the `Keyframed` objects have different lengths, only the keyframes and corresponding values up to the length of the shorter `Keyframed` object will be used in the operation.
 
 Additionally, note that addition and subtraction of `Keyframed` objects is not commutative. For example, `kf1 + kf2` and `kf2 + kf1` will yield different results.
+
+<!-- 
+NB: ChatGPT is inventing arguments and methods that aren't part of the implementation.
+This is undesirable, but I don't consider it "out of bounds" because this output was preceded by PR/FAQ generation,
+which explicitly requested suggestions for future features.
+-->
+## Advanced Adaptor Usage
+
+The `Adaptor` class is a powerful tool for transforming `Keyframed` objects in various ways. You can use it to scale, offset, or reverse the values of a `Keyframed` object. Here's an example of how to use the `Adaptor` class to achieve these transformations:
+
+```python
+from keyframed import Keyframed, Adaptor
+import numpy as np
+
+# Define a simple Keyframed object with linear interpolation
+kf = Keyframed({0: 0, 10: 1}, interp='linear')
+
+# Scale the values of the Keyframed object by 2
+scaled = Adaptor(kf, scale=2)
+assert list(scaled.values()) == [0, 2]
+
+# Offset the values of the Keyframed object by 1
+offset = Adaptor(kf, offset=1)
+assert list(offset.values()) == [1, 2]
+
+# Reverse the values of the Keyframed object
+reversed_kf = Adaptor(kf, reverse=True)
+assert list(reversed_kf.values()) == [1, 0]
+
+# Combine multiple transformations
+transformed = Adaptor(kf, scale=2, offset=1, reverse=True)
+assert list(transformed.values()) == [2, 0]
+```
+
+As you can see, the `Adaptor` class makes it easy to apply multiple transformations to a `Keyframed` object in a single line of code. You can use the `scale`, `offset`, and `reverse` arguments to control which transformations are applied.
+
+Note that the `Adaptor` class does not modify the original `Keyframed` object - it creates a new `Keyframed` object with the transformed values. This allows you to apply multiple transformations to the same `Keyframed` object without modifying the original.
