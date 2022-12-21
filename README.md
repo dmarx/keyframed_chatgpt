@@ -127,3 +127,32 @@ plt.show()
 ```
 
 As you can see, the append method allows you to combine two Keyframed objects into a new Keyframed object that represents the concatenation of the two objects. This is useful if you want to create a longer time-varying signal by combining multiple shorter signals.
+
+---
+
+## New Arithmetic Capabilities!
+
+Our `KeyframedBase` and `Keyframed` classes now support basic arithmetic operations between `Keyframed` objects and scalars, and between `Keyframed` objects and other `Keyframed` objects. These operations are implemented using the corresponding dunder methods, such as `__add__`, `__mul__`, etc. Here is an example of how you can use these methods:
+
+```python
+# Create a keyframed object with a single keyframe at index 5
+kf1 = Keyframed({5: 10})
+
+# Add a scalar value to the keyframed object
+kf2 = kf1 + 5
+print(kf2[5])  # prints 15
+
+# Multiply the keyframed object by a scalar value
+kf3 = kf2 * 2
+print(kf3[5])  # prints 30
+
+# Add two keyframed objects together
+kf4 = Keyframed({0: 5, 10: 15})
+kf5 = kf3 + kf4
+print(kf5[5])  # prints 35
+print(kf5[10])  # prints 45
+```
+
+Note that addition and subtraction of `Keyframed` objects is only supported between `Keyframed` objects of the same length. If the `Keyframed` objects have different lengths, only the keyframes and corresponding values up to the length of the shorter `Keyframed` object will be used in the operation.
+
+Additionally, note that addition and subtraction of `Keyframed` objects is not commutative. For example, `kf1 + kf2` and `kf2 + kf1` will yield different results.
