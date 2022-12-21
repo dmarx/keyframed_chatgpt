@@ -1,6 +1,7 @@
-# I'm seeing commonalities in the APIs for the Keyframed, Adaptor, and Looper classes. Please implement a `KeyframedBase` abstract base class which captures these commonalities and standard API. respond with working code only.
+# please re-implement the `keyframed` library we've been working on here by building on top of the `traces` library
 
 import abc
+import traces
 
 class KeyframedBase(abc.ABC):
     def __init__(self):
@@ -31,65 +32,53 @@ class KeyframedBase(abc.ABC):
     def keyframes(self):
         pass
 
-class Keyframed(KeyframedBase):
+# NB: request for implementation "using" traces dropped the ABC inheritance
+class Keyframed(traces.TimeSeries):
     def __init__(self, data=None, interp=None, n=None):
-        super().__init__()
         if data is None:
-            data = {0: 0}
+            data = {}
         if interp is None:
             interp = {}
-        self.data = data
+        
+        self.is_bounded = (n is not None)
         self.interp = interp
+        
+        # Initialize the TimeSeries with the data and interpolation methods
+        super().__init__(data, interp=interp)
+        
         if n is not None:
-            self.is_bounded = True
-            self.length = n
+            self.set_length(n)
     
-    def __getitem__(self, index):
-        if index < 0 or (self.is_bounded and index >= self.length):
-            raise StopIteration
-        if index in self.data:
-            return self.data[index]
-        sorted_keys = sorted(self.data.keys())
-        i = 0
-        while i < len(sorted_keys) and sorted_keys[i] < index:
-            i += 1
-        prev_key = sorted_keys[i-1]
-        next_key = sorted_keys[i]
-        prev_val = self.data[prev_key]
-        next_val = self.data[next_key]
-        if prev_key in self.interp:
-            interp_type = self.interp[prev_key]
+    def __len__(self):
+        if self.is_bounded:
+            return self.end - self.start
         else:
-            interp_type = 'linear'
-        if interp_type == 'previous':
-            return prev_val
-        elif interp_type == 'next':
-            return next_val
-        elif interp_type == 'linear':
-            slope = (next_val - prev_val) / (next_key - prev_key)
-            return prev_val + slope * (index - prev_key)
+            return None
+    
+    def set_length(self, n):
+        self.is_bounded = True
+        self.end = self.start + n
+    
+    def set_unbounded(self):
+        self.is_bounded = False
+        self.end = None
+    
+    def append(self, other):
+        if self.is_bounded or other.is_bounded:
+            raise ValueError("Cannot append bounded TimeSeries")
+        
+        self.update(other)
     
     def __setitem__(self, index, value):
-        self.data[index] = value[0]
-        if len(value) > 1:
-            self.interp[index] = value[1]
+        if self.is_bounded and index >= len(self):
+            raise IndexError("Index out of range")
+        
+        super().__setitem__(index, value)
     
+    # NB: ChatGPT dropped this property. Leaving it for now, no idea if it still works
     @property
     def keyframes(self):
         return self.data.keys()
     
-    # NB: ChatGPT dropped these methods, but I'm going to keep them for now and assume they still work
-    def set_unbounded(self):
-        self.is_bounded = False
-        self.length = None
-    
-    def set_length(self, n):
-        self.length = n
-        self.is_bounded = True
-    
-    def append(self, other):
-        if self.is_bounded or other.is_bounded:
-            raise ValueError("Cannot append a bounded Keyframed object")
-        self.data.update(other.data)
-        self.interp.update(other.interp)
-        self.length = None
+
+
