@@ -74,26 +74,29 @@ class KeyframedBase(abc.ABC):
         for k in self._data:
             result._data[k] += other
         return result
-    
+        
+    # please modify your implementation of `__add_kf` to support adding Keyframed objects of different lengths. if `len(self) < len(other)`, just ignore the out-of-bounds indices such that `len(result) == len(self)`. This will have the consequence that addition of Keyframed objects will not be commutative, but that's fine.
     def __add_kf(self, other):
         if self.is_bounded != other.is_bounded:
             raise ValueError('Cannot add bounded and unbounded Keyframed objects')
-        if self.is_bounded:
-            if self.n != other.n:
-                raise ValueError('Cannot add Keyframed objects of different lengths')
         result = Keyframed(n=self.n)
         result._data = sortedcontainers.SortedDict(self._data)
         result._interp = sortedcontainers.SortedDict(self._interp)
         for k in other._data:
+            if k >= self.n:
+                continue
             if k in result._data:
                 result._data[k] += other._data[k]
             else:
                 result._data[k] = other._data[k]
         for k in other._interp:
+            if k >= self.n:
+                continue
             if k in result._interp:
                 raise ValueError('Cannot add Keyframed objects with overlapping keyframes')
             result._interp[k] = other._interp[k]
         return result
+
     
     def __mul_scalar(self, other):
         result = Keyframed(n=self.n)
