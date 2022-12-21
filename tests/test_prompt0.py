@@ -119,6 +119,20 @@ def test_append_values_CHATGPT():
     assert k2[14] == 14
     assert k2[19] == 19
 
+# NB: ChatGPT provided this test without wrapping it in a function, so I took the liberty
+def test_chatgpt_interp1d():
+    k = Keyframed(data={0:0, 4:4, 9:9}, interp={1:"linear", 5:"previous", 8:"next"}, n=10)
+    assert k[0] == 0
+    assert k[1] == 1
+    assert k[2] == 2
+    assert k[3] == 3
+    assert k[4] == 4
+    assert k[5] == 4
+    assert k[6] == 4
+    assert k[7] == 4
+    assert k[8] == 4
+    assert k[9] == 9
+
 ##########################################
 
 def test_new_keyframe_datum():

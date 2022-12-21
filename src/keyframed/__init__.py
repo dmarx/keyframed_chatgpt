@@ -2,6 +2,7 @@
 
 import abc
 import traces
+import scipy.interpolate
 
 class KeyframedBase(abc.ABC):
     def __init__(self):
@@ -33,6 +34,8 @@ class KeyframedBase(abc.ABC):
         pass
 
 # NB: request for implementation "using" traces dropped the ABC inheritance
+# NB: Now ChatGPT dropped all inheritance for this class, but was focused on __getitem__ implementation
+#     so let's chalk that up to it being "distracted" and assume the only change is the __getitem__ method.
 class Keyframed(traces.TimeSeries):
     def __init__(self, data=None, interp=None, n=None):
         if data is None:
@@ -80,6 +83,30 @@ class Keyframed(traces.TimeSeries):
         
         return Keyframed(data, interp=interp, n=n)
     
+    # i've noticed that `scipy.interpolate.interp1d` has a lot of useful interpolation methods I'd like to support. please modify your implementation of the Keyframed class to use `scipy.interpolate.interp1d` to perform interpolations between keyframes. respond with working python code which implements the Keyframed class only, no unit tests.
+    def __getitem__(self, t):
+        if t in self.keyframes:
+            return self.data[t]
+        
+        interp_method = self.interp.get(t, "linear")
+        if interp_method == "linear":
+            x = list(self.keyframes)
+            y = [self.data[x_] for x_ in x]
+            f = scipy.interpolate.interp1d(x, y, kind="linear")
+            return f(t)
+        elif interp_method == "previous":
+            x = list(self.keyframes)
+            y = [self.data[x_] for x_ in x]
+            f = scipy.interpolate.interp1d(x, y, kind="previous")
+            return f(t)
+        elif interp_method == "next":
+            x = list(self.keyframes)
+            y = [self.data[x_] for x_ in x]
+            f = scipy.interpolate.interp1d(x, y, kind="next")
+            return f(t)
+        else:
+            raise ValueError(f"Invalid interpolation method: {interp_method}")
+
     def __setitem__(self, index, value):
         if self.is_bounded and index >= len(self):
             raise IndexError("Index out of range")
