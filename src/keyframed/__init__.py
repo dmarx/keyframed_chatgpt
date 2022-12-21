@@ -1,41 +1,9 @@
-# please re-implement the `keyframed` library we've been working on here by building on top of the `traces` library
-
+# please modify this to inherit from a `KeyframedBase` abstract base class which will be used to extend the core API to the Adaptor and Looper classes
 import abc
-import traces
 import scipy.interpolate
 import sortedcontainers
 
 class KeyframedBase(abc.ABC):
-    def __init__(self):
-        self.is_bounded = False
-        self.length = None
-    
-    def __len__(self):
-        return self.length
-    
-    def set_unbounded(self):
-        self.is_bounded = False
-        self.length = None
-    
-    def set_length(self, n):
-        self.length = n
-        self.is_bounded = True
-    
-    @abc.abstractmethod
-    def __getitem__(self, index):
-        pass
-    
-    @abc.abstractmethod
-    def __setitem__(self, index, value):
-        pass
-    
-    @property
-    @abc.abstractmethod
-    def keyframes(self):
-        pass
-
-# Please modify the `Keyframed` class such that it still uses the `traces` library and `scipy.interpolate`, but such that a user can provide a custom defined callable as a keyframe valuable. Let's assume that the callable must take the keyframe index (k) as the first positional argument, and the Keyframed object itself (parent_kf) as the second positional argument.
-class Keyframed:
     def __init__(self, data=None, interp=None, n=None):
         if data is None:
             data = {}
@@ -50,7 +18,16 @@ class Keyframed:
             self[k] = v
         for k, v in interp.items():
             self.set_interp(k, v)
-    
+
+    @abc.abstractmethod
+    def __getitem__(self, k):
+        pass
+
+    @abc.abstractmethod
+    def __setitem__(self, k, v):
+        pass
+
+class Keyframed(KeyframedBase):
     def __getitem__(self, k):
         if self.is_bounded:
             if k < 0 or k >= self.n:
