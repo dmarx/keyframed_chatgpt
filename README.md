@@ -220,3 +220,147 @@ assert looper[5] == 1
 assert looper[2] == looper[9] == 0.5
 ```
 
+## Using the Looper to implement LFOs
+
+An LFO (low frequency oscillator) is a type of oscillator that produces a periodic waveform with a frequency lower than the audible range (less than 20 Hz). LFOs are commonly used to modulate other parameters in audio synthesis and processing.
+
+One common use case for LFOs is to create a rhythmic pulse or modulation effect in music. For example, you might want to use an LFO to modulate the volume of a synth pad in a subtle, periodic way to create a pulsing effect.
+
+To implement an LFO using the `Looper` class, we will first need to define a waveform to use as the LFO. A simple waveform to start with is a sine wave, which can be created using the `math.sin` function.
+
+Here's how we can define a sine wave LFO using the `Looper` class:
+
+```python
+import math
+
+from keyframed import Keyframed, Looper
+
+def sine_wave(k, parent_kf, frequency=1, amplitude=1, phase=0):
+    """Generate a sine wave with the given frequency, amplitude, and phase."""
+    return amplitude * math.sin(2 * math.pi * frequency * k + phase)
+
+# Create a Keyframed object with a single keyframe at index 0 with a value of 0
+kf = Keyframed({0: 0}, n=1)
+
+# Create a Looper object with a delay of 0 frames between loop repetitions
+looper = Looper(kf, delay=0)
+
+# Use the sine_wave function as the keyframe value for the Looper object
+looper[0] = sine_wave, 'linear'
+
+# The Looper object should have a length of 1
+assert len(looper) == 1
+
+# The value of the Looper object at index 0 should be 0
+assert looper[0] == 0
+```
+
+Now that we have a basic sine wave LFO, we can use it to modulate other parameters in our music. For example, we can use the LFO to modulate the volume of a synth pad in a subtle, periodic way to create a pulsing effect.
+
+To do this, we can use the `Looper.transform` method to apply the LFO to another `Keyframed` object. Here's an example of how we might use the `Looper` class to modulate the volume of a synth pad:
+
+```python
+import math
+
+from keyframed import Keyframed, Looper
+
+def sine_wave(k, parent_kf, frequency=1, amplitude=1, phase=0):
+    """Generate a sine wave with the given frequency, amplitude, and phase."""
+    return amplitude * math.sin(2 * math.pi * frequency * k + phase)
+
+# Create a Keyframed object with a single keyframe at index 0 with a value of 0
+kf = Keyframed({0: 0}, n=1)
+
+# Create a Looper object with a delay of 0 frames between loop repetitions
+looper = Looper(kf, delay=0)
+
+# Use the sine_wave function as the keyframe value for the Looper object
+looper[0] = sine_wave, 'linear'
+
+# The Looper object should have a length of 1
+assert len(looper) == 1
+
+# The value of the Looper object at index 0 should be 0
+assert looper[0] == 0
+
+# Create a Keyframed object representing the volume of a synth pad
+volume = Keyframed({0: 0.5, 9: 1.0, 10: 0.5, 19: 0.0}, interp='linear', n=20)
+
+# Use the Looper object to modulate the volume of the synth pad
+modulated_volume = volume.transform(lambda v, lfo: v * lfo, looper)
+
+# The modulated volume should have the same length as the original volume
+assert len(modulated_volume) == len(volume)
+
+# The value of the modulated volume at index 0 should be 0.5 * 0 = 0
+assert modulated_volume[0] == 0
+
+# The value of the modulated volume at index 5 should be 0.5 * 0.5 = 0.25
+assert modulated_volume[5] == 0.25
+
+# The value of the modulated volume at index 15 should be 0.5 * -1 = -0.5
+assert modulated_volume[15] == -0.5
+```
+
+As you can see, the `Looper` class can be used to create complex modulation effects by composing multiple LFOs together. This can be done using the `+`, `-`, `*`, and `/` operators, as well as the `transform` method, to combine multiple LFOs into a single `Keyframed` object.
+
+For example, we might want to create an LFO with a slower frequency to modulate the pitch of a synth, and then use a faster LFO to modulate the volume of the synth. To do this, we can simply add the two LFOs together using the `+` operator:
+
+```python
+import math
+
+from keyframed import Keyframed, Looper
+
+def sine_wave(k, parent_kf, frequency=1, amplitude=1, phase=0):
+    """Generate a sine wave with the given frequency, amplitude, and phase."""
+    return amplitude * math.sin(2 * math.pi * frequency * k + phase)
+
+# Create a Keyframed object with a single keyframe at index 0 with a value of 0
+kf = Keyframed({0: 0}, n=1)
+
+# Create a Looper object with a delay of 0 frames between loop repetitions
+looper = Looper(kf, delay=0)
+
+# Use the sine_wave function as the keyframe value for the Looper object
+looper[0] = sine_wave, 'linear'
+
+# Create a second Looper object with a delay of 0 frames between loop repetitions
+looper2 = Looper(kf, delay=0)
+
+# Use a modified version of the sine_wave function as the keyframe value for the second Looper object
+looper2[0] = lambda k, parent_kf: sine_wave(k, parent_kf, frequency=2), 'linear'
+
+# Add the two LFOs together
+lfo = looper + looper2
+
+# The LFO should have a length of 1
+assert len(lfo) == 1
+
+# The value of the LFO at index 0 should be 0 + 0 = 0
+assert lfo[0] == 0
+
+# The value of the LFO at index 0 should be 0 + 0 = 0
+assert lfo[0] == 0
+
+#The value of the LFO at index 1 should be the sum of the values of the two LFOs at index 1
+assert lfo[1] == looper[1] + looper2[1]
+
+#The value of the LFO at index 2 should be the sum of the values of the two LFOs at index 2
+assert lfo[2] == looper[2] + looper2[2]
+
+# And so on
+
+# We can use this LFO to modulate the pitch and volume of a synth by multiplying the LFO values by the desired pitch and volume ranges
+pitch_range = 12 # semitones
+volume_range = 0.5 # range from 0 to 0.5
+
+pitch = lfo * pitch_range
+volume = lfo * volume_range
+
+# Now we can use the pitch and volume values to control our synth
+```
+
+This is just one example of how the Looper class can be used to create LFOs. The possibilities are endless! You can use LFOs to control almost any parameter in your music or art project, and you can even chain multiple LFOs together to create even more complex modulations.
+
+
+
