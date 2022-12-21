@@ -3,6 +3,7 @@ import abc
 import scipy.interpolate
 import sortedcontainers
 
+# please add dunder methods to KeyframedBase and/or Keyframed/Looper to permit basic arithmetic operations between Keyframed objects and scalars, and between Keyframed objects and other Keyframed objects
 class KeyframedBase(abc.ABC):
     def __init__(self, data=None, interp=None, n=None):
         if data is None:
@@ -26,6 +27,83 @@ class KeyframedBase(abc.ABC):
     @abc.abstractmethod
     def __setitem__(self, k, v):
         pass
+
+    def __add__(self, other):
+        if isinstance(other, (int, float)):
+            return self.__add_scalar(other)
+        if isinstance(other, KeyframedBase):
+            return self.__add_kf(other)
+        raise TypeError('unsupported operand type(s) for +: Keyframed and {}'.format(type(other)))
+    
+    def __radd__(self, other):
+        return self.__add__(other)
+    
+    def __sub__(self, other):
+        if isinstance(other, (int, float)):
+            return self.__add_scalar(-other)
+        if isinstance(other, KeyframedBase):
+            return self.__add_kf(-other)
+        raise TypeError('unsupported operand type(s) for -: Keyframed and {}'.format(type(other)))
+    
+    def __rsub__(self, other):
+        return (-self).__add__(other)
+    
+    def __mul__(self, other):
+        if isinstance(other, (int, float)):
+            return self.__mul_scalar(other)
+        if isinstance(other, KeyframedBase):
+            return self.__mul_kf(other)
+        raise TypeError('unsupported operand type(s) for *: Keyframed and {}'.format(type(other)))
+    
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
+    def __truediv__(self, other):
+        if isinstance(other, (int, float)):
+            return self.__mul_scalar(1 / other)
+        if isinstance(other, KeyframedBase):
+            return self.__mul_kf(1 / other)
+        raise TypeError('unsupported operand type(s) for /: Keyframed and {}'.format(type(other)))
+    def __rtruediv__(self, other):
+        return self.__rdiv_scalar(other)
+    
+    def __add_scalar(self, other):
+        result = Keyframed(n=self.n)
+        result._data = sortedcontainers.SortedDict(self._data)
+        result._interp = sortedcontainers.SortedDict(self._interp)
+        for k in self._data:
+            result._data[k] += other
+        return result
+    
+    def __add_kf(self, other):
+        if self.is_bounded != other.is_bounded:
+            raise ValueError('Cannot add bounded and unbounded Keyframed objects')
+        if self.is_bounded:
+            if self.n != other.n:
+                raise ValueError('Cannot add Keyframed objects of different lengths')
+        result = Keyframed(n=self.n)
+        result._data = sortedcontainers.SortedDict(self._data)
+        result._interp = sortedcontainers.SortedDict(self._interp)
+        for k in other._data:
+            if k in result._data:
+                result._data[k] += other._data[k]
+            else:
+                result._data[k] = other._data[k]
+        for k in other._interp:
+            if k in result._interp:
+                raise ValueError('Cannot add Keyframed objects with overlapping keyframes')
+            result._interp[k] = other._interp[k]
+        return result
+    
+    def __mul_scalar(self, other):
+        result = Keyframed(n=self.n)
+        result._data = sortedcontainers.SortedDict(self._data)
+        result._interp = sortedcontainers.SortedDict(self._interp)
+        for k in self._data:
+            result._data[k] *= other
+
+
+
 
 class Keyframed(KeyframedBase):
     def __getitem__(self, k):
