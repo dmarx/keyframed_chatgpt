@@ -92,6 +92,20 @@ def test_append_keyframes():
     assert len(k0) == 11
     assert list(k0.keyframes) == [0,3,5,9]
 
+###
+
+# # Please re-implement the `append` method such that 1. both `self` and `other` must be bounded, 2. a new object is returned rather than mutating either `self` or `other`, 3. the length of the returned Keyframed object is `len(self) + len(other)` (satisfying this requirement is why both self and other must be bounded objects)
+def test_append_len_CHATGPT():
+    k0 = Keyframed(data={0:0, 9:9}, n=10)
+    k1 = Keyframed(data={10:10, 19:19}, n=10)
+    k2 = k0.append(k1)
+    assert len(k2) == 20
+
+def test_append_keyframes_CHATGPT():
+    k0 = Keyframed(data={0:0, 4:4, 9:9}, n=10)
+    k1 = Keyframed(data={10:10, 14:14, 19:19}, n=10)
+    k2 = k0.append(k1)
+    assert list(k2.keyframes) == [0, 4, 9, 10, 14, 19]
 
 ##########################################
 

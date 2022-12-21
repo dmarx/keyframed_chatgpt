@@ -63,11 +63,16 @@ class Keyframed(traces.TimeSeries):
         self.is_bounded = False
         self.end = None
     
+    # Please re-implement the `append` method such that 1. both `self` and `other` must be bounded, 2. a new object is returned rather than mutating either `self` or `other`, 3. the length of the returned Keyframed object is `len(self) + len(other)` (satisfying this requirement is why both self and other must be bounded objects)
     def append(self, other):
-        if self.is_bounded or other.is_bounded:
-            raise ValueError("Cannot append bounded TimeSeries")
+        if not self.is_bounded or not other.is_bounded:
+            raise ValueError("Cannot append unbounded TimeSeries")
         
-        self.update(other)
+        data = {**self.items(), **other.items()}
+        interp = {**self.interp, **other.interp}
+        n = len(self) + len(other)
+        
+        return Keyframed(data, interp=interp, n=n)
     
     def __setitem__(self, index, value):
         if self.is_bounded and index >= len(self):
