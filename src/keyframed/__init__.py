@@ -1,3 +1,5 @@
+# I'm seeing commonalities in the APIs for the Keyframed, Adaptor, and Looper classes. Please implement a `KeyframedBase` abstract base class which captures these commonalities and standard API. respond with working code only.
+
 class Keyframed:
     def __init__(self, data=None, interp=None, n=None):
         if data is None:
