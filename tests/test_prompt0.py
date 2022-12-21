@@ -95,6 +95,7 @@ def test_append_keyframes():
 ###
 
 # # Please re-implement the `append` method such that 1. both `self` and `other` must be bounded, 2. a new object is returned rather than mutating either `self` or `other`, 3. the length of the returned Keyframed object is `len(self) + len(other)` (satisfying this requirement is why both self and other must be bounded objects)
+# # this is a good start, but the indices of the right object in the append should be offset by the length of the left object. Please fix your implementation of the append method to satisfy this or request additional clarification. Respond with working code only, no additional unit tests required
 def test_append_len_CHATGPT():
     k0 = Keyframed(data={0:0, 9:9}, n=10)
     k1 = Keyframed(data={10:10, 19:19}, n=10)
@@ -106,6 +107,17 @@ def test_append_keyframes_CHATGPT():
     k1 = Keyframed(data={10:10, 14:14, 19:19}, n=10)
     k2 = k0.append(k1)
     assert list(k2.keyframes) == [0, 4, 9, 10, 14, 19]
+
+def test_append_values_CHATGPT():
+    k0 = Keyframed(data={0:0, 4:4, 9:9}, n=10)
+    k1 = Keyframed(data={10:10, 14:14, 19:19}, n=10)
+    k2 = k0.append(k1)
+    assert k2[0] == 0
+    assert k2[4] == 4
+    assert k2[9] == 9
+    assert k2[10] == 10
+    assert k2[14] == 14
+    assert k2[19] == 19
 
 ##########################################
 
