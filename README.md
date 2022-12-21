@@ -193,3 +193,30 @@ assert list(transformed.values()) == [2, 0]
 As you can see, the `Adaptor` class makes it easy to apply multiple transformations to a `Keyframed` object in a single line of code. You can use the `scale`, `offset`, and `reverse` arguments to control which transformations are applied.
 
 Note that the `Adaptor` class does not modify the original `Keyframed` object - it creates a new `Keyframed` object with the transformed values. This allows you to apply multiple transformations to the same `Keyframed` object without modifying the original.
+
+## New Looper 'delay' feature
+
+Now, when we create a new `Looper` object, we can specify the number of frames to pause between loop repetitions using the `delay` argument. We can also specify how the Looper should interpolate between loops during the delay period using the `delay_interp` argument.
+
+Here's an example of how to use the new `Looper` class:
+
+```python
+# Define a simple Keyframed object with linear interpolation
+kf = Keyframed({0: 0, 10: 1}, interp='linear')
+
+# Create a Looper object with a delay of 2 frames between loop repetitions
+looper = Looper(kf, delay=2)
+
+# The Looper object should have a length of 12
+assert len(looper) == 12
+
+# The first and last values should be 0
+assert looper[0] == looper[11] == 0
+
+# The middle value should be 1
+assert looper[5] == 1
+
+# The values at indices 2 and 9 should be 0.5 (interpolated during the delay period)
+assert looper[2] == looper[9] == 0.5
+```
+
